@@ -2,6 +2,13 @@
 
 PixelSteg is a local .NET 8 tool for packaging a file in a lossless PNG and recovering the original bytes later. It can be useful when a PNG container fits a local file-transfer workflow. It is deliberately straightforward: encoding is **not encryption or steganographic secrecy**, and PixelSteg is not a downloader, loader, or execution mechanism.
 
+## Project status
+
+PixelSteg is an initial source release for .NET 8. Core, CLI, Windows WPF app,
+format documentation, and bounded synthetic tests live in this repository.
+There are no published binaries; build from source and verify the exact
+revision and platform you intend to use.
+
 ![Architecture](docs/images/architecture.svg)
 
 ## Safety model
