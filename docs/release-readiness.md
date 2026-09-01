@@ -1,14 +1,19 @@
 # Release readiness
 
-Reviewed 2026-08-12.
+Last reviewed: 2026-09-01.
 
-| Check | Evidence |
+| Check | Required evidence |
 | --- | --- |
-| Runtime dependencies | None beyond .NET 8; the PNG writer/reader uses the BCL `System.IO.Compression`. |
-| Test-only dependencies | Top-level: xUnit 2.9.2, xUnit Visual Studio runner 2.8.2, and Microsoft.NET.Test.Sdk 17.11.1. Resolved transitives: Microsoft.CodeCoverage 17.11.1, Microsoft.TestPlatform.ObjectModel 17.11.1, Microsoft.TestPlatform.TestHost 17.11.1, Newtonsoft.Json 13.0.1, System.Reflection.Metadata 1.6.0, xunit.abstractions 2.0.3, xunit.analyzers 1.16.0, xunit.assert/core 2.9.2, and xunit.extensibility.core/execution 2.9.2. These test-only packages are compatible with the repository's MIT license and are not shipped with the app. |
-| Build and tests | Run `dotnet build PixelSteg.sln -c Release` and `dotnet test PixelSteg.sln -c Release`. |
-| Formatting | Run `dotnet format PixelSteg.sln --verify-no-changes --no-restore`. |
-| Credential and path scan | Run a case-insensitive credential-token and personal-path scan, excluding generated build directories. |
-| Manual smoke test | Encode and decode `docs/images/synthetic-sample.txt`; compare the decoded bytes with the source. |
+| Clean source | `git diff --check` and a clean worktree after the release commit |
+| Restore | `dotnet restore PixelSteg.sln --locked-mode` when lock files are present; otherwise normal restore |
+| Build | `dotnet build PixelSteg.sln -c Release --no-restore` |
+| Tests | All Core, CLI and App tests pass in Release configuration |
+| Formatting | `dotnet format PixelSteg.sln --verify-no-changes --no-restore` |
+| CLI smoke test | Embed, inspect and extract a synthetic message and file; compare recovered bytes |
+| Desktop smoke test | Start the published Windows app; complete one hide/reveal cycle |
+| Format review | `docs/format-v2.md` matches constants and byte order in Core |
+| Dependency review | Runtime projects have no third-party package references; test packages are not published |
+| Secret/path scan | No credentials, private keys, user paths or machine-specific build output are tracked |
+| Artifacts | Archives contain published output, license and README; checksums match |
 
-No binaries, packages, Git tags, releases, pushes, or publication actions are part of this repository preparation.
+The tag workflow builds source again and attaches framework-dependent CLI packages for Windows and Linux plus a self-contained Windows desktop package. A maintainer should verify the generated checksums and smoke-test the downloaded archives before announcing a release.

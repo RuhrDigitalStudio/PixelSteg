@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      - name: Verify source
+        shell: pwsh
+        run: |
+          dotnet restore PixelSteg.sln
+          dotnet build PixelSteg.sln -c Release --no-restore
+          dotnet test PixelSteg.sln -c Release --no-build --verbosity normal
+          dotnet format PixelSteg.sln --verify-no-changes --no-restore
+      - name: Publish packages
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          dotnet publish src/PixelSteg.App/PixelSteg.App.csproj -c Release -r win-x64 --self-contained true -p:Version=$version -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false -o staging/app-win-x64
+          dotnet publish src/PixelSteg.Cli/PixelSteg.Cli.csproj -c Release -r win-x64 --self-contained false -p:Version=$version -p:DebugType=None -p:DebugSymbols=false -o staging/cli-win-x64
+          dotnet publish src/PixelSteg.Cli/PixelSteg.Cli.csproj -c Release -r linux-x64 --self-contained false -p:Version=$version -p:DebugType=None -p:DebugSymbols=false -o staging/cli-linux-x64
+          foreach ($folder in @('app-win-x64', 'cli-win-x64', 'cli-linux-x64')) {
+            Copy-Item README.md, LICENSE "staging/$folder"
+          }
+          Compress-Archive staging/app-win-x64/* "artifacts/PixelSteg-$version-windows-x64.zip"
+          Compress-Archive staging/cli-win-x64/* "artifacts/PixelSteg.Cli-$version-windows-x64.zip"
+          tar -czf "artifacts/PixelSteg.Cli-$version-linux-x64.tar.gz" -C staging/cli-linux-x64 .
+          Get-ChildItem artifacts -File | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          } | Set-Content artifacts/SHA256SUMS.txt
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" artifacts/* --verify-tag --generate-notes --title "PixelSteg ${{ github.ref_name }}"

@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore
+        run: dotnet restore PixelSteg.sln
+      - name: Build
+        run: dotnet build PixelSteg.sln -c Release --no-restore
+      - name: Test
+        run: dotnet test PixelSteg.sln -c Release --no-build --verbosity normal
+      - name: Verify formatting
+        run: dotnet format PixelSteg.sln --verify-no-changes --no-restore
