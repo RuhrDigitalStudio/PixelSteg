@@ -8,4 +8,7 @@ public static class PixelStegLimits
     public const int MaximumPixels = (int)((MaximumContainerBytes + 10) / 3);
     public const long MaximumPngRawBytes = MaximumContainerBytes + 64 * 1024;
     public const long MaximumPngDataBytes = MaximumPngRawBytes + 2 * 1024 * 1024;
+    public const int MaximumCoverPixels = 32 * 1024 * 1024;
+    public const long MaximumCoverRawBytes = (long)MaximumCoverPixels * 4 + 64 * 1024;
+    public const long MaximumCoverCompressedBytes = MaximumCoverRawBytes + 2 * 1024 * 1024;
 }
