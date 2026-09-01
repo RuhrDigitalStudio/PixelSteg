@@ -18,3 +18,27 @@ public sealed record StegoFrameInfo(
     long EnvelopeLength);
 
 public sealed record StegoFrame(byte[] Locator, byte[] Body, StegoFrameInfo Info);
+
+public sealed record StegoCapacity(
+    EmbeddingProfile Profile,
+    long StableChannels,
+    long LocatorChannels,
+    long AvailablePayloadBytes);
+
+public sealed record ImageQualityReport(
+    long ChangedChannels,
+    int MaximumChannelDelta,
+    double MeanSquaredError,
+    double Psnr,
+    double Ssim,
+    double UsedCapacityRatio);
+
+public sealed record StegoEmbedResult(
+    PngImage Image,
+    StegoFrameInfo Frame,
+    ImageQualityReport Quality);
+
+public sealed record StegoExtractResult(
+    byte[] Payload,
+    StegoFrameInfo Frame,
+    int CorrectedCodewords);
