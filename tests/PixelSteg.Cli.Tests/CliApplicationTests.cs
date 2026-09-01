@@ -5,6 +5,63 @@ namespace PixelSteg.Cli.Tests;
 
 public sealed class CliApplicationTests
 {
+    [Fact]
+    public async Task Help_ReturnsSuccessAndPrintsCommands()
+    {
+        var output = new StringWriter();
+
+        var result = await CliApplication.RunAsync(
+            ["--help"],
+            output,
+            TextWriter.Null,
+            CancellationToken.None);
+
+        Assert.Equal(0, result);
+        Assert.Contains("embed-message", output.ToString(), StringComparison.Ordinal);
+        Assert.Contains("inspect", output.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task EmbedFile_RejectsTooManyEntriesBeforeOpeningThem()
+    {
+        var paths = Enumerable.Range(0, 65).Select(index => $"missing-{index}.bin");
+        var arguments = new[] { "embed-file", "cover.png", "carrier.png" }.Concat(paths).ToArray();
+        var error = new StringWriter();
+
+        var result = await CliApplication.RunAsync(
+            arguments,
+            TextWriter.Null,
+            error,
+            CancellationToken.None);
+
+        Assert.Equal(1, result);
+        Assert.Contains("64", error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task EmbedFile_RejectsCombinedSizeBeforeLoadingPayloads()
+    {
+        var root = CreateDirectory();
+        try
+        {
+            var first = Path.Combine(root, "first.bin");
+            var second = Path.Combine(root, "second.bin");
+            await using (var file = File.Create(first)) file.SetLength(66L * 1024 * 1024);
+            await using (var file = File.Create(second)) file.SetLength(66L * 1024 * 1024);
+            var error = new StringWriter();
+
+            var result = await CliApplication.RunAsync(
+                ["embed-file", "missing-cover.png", Path.Combine(root, "carrier.png"), first, second],
+                TextWriter.Null,
+                error,
+                CancellationToken.None);
+
+            Assert.Equal(1, result);
+            Assert.Contains("combined", error.ToString(), StringComparison.OrdinalIgnoreCase);
+        }
+        finally { Directory.Delete(root, recursive: true); }
+    }
+
     [Theory]
     [InlineData("balanced")]
     [InlineData("dense")]

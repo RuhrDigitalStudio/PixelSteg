@@ -2,6 +2,7 @@ namespace PixelSteg.Core;
 
 public static class PixelStegLimits
 {
+    public const int MaximumBundleEntries = 64;
     public const int MaximumFileNameBytes = 1024;
     public const long MaximumPayloadBytes = 128L * 1024 * 1024;
     public const long MaximumContainerBytes = MaximumPayloadBytes + MaximumFileNameBytes + 64;

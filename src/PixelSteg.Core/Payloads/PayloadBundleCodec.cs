@@ -9,14 +9,13 @@ public static class PayloadBundleCodec
     private static readonly byte[] Magic = "PBND"u8.ToArray();
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private const ushort Version = 1;
-    private const int MaximumEntries = 64;
     private const int MaximumNameBytes = 1024;
     private const int MaximumMediaTypeBytes = 256;
 
     public static byte[] Pack(PayloadBundle bundle)
     {
         ArgumentNullException.ThrowIfNull(bundle);
-        if (bundle.Entries.Count is < 1 or > MaximumEntries)
+        if (bundle.Entries.Count is < 1 or > PixelStegLimits.MaximumBundleEntries)
             throw new PixelStegException("A bundle must contain between 1 and 64 entries.");
 
         var prepared = new List<PreparedEntry>(bundle.Entries.Count);
@@ -77,7 +76,7 @@ public static class PayloadBundleCodec
             throw new PixelStegException("This payload bundle version is not supported.");
 
         var count = BinaryPrimitives.ReadUInt16LittleEndian(encoded.Slice(6, 2));
-        if (count is < 1 or > MaximumEntries)
+        if (count is < 1 or > PixelStegLimits.MaximumBundleEntries)
             throw new PixelStegException("The payload bundle entry count is invalid.");
 
         var entries = new List<PayloadEntry>(count);

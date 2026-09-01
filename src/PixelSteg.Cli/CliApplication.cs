@@ -16,6 +16,11 @@ public static class CliApplication
         readEnvironment ??= Environment.GetEnvironmentVariable;
         try
         {
+            if (args.Length == 1 && args[0] is "--help" or "-h" or "help")
+            {
+                await output.WriteLineAsync(Usage);
+                return 0;
+            }
             if (args.Length == 3 && string.Equals(args[0], "encode", StringComparison.OrdinalIgnoreCase))
                 return await EncodeCommand.RunAsync(args[1], args[2], error, cancellationToken);
             if (args.Length is 3 or 4 && string.Equals(args[0], "decode", StringComparison.OrdinalIgnoreCase) && (args.Length == 3 || args[3] == "--overwrite"))

@@ -15,18 +15,36 @@ public static class EmbedCommand
         CancellationToken cancellationToken)
     {
         if (inputPaths.Count == 0) throw new ArgumentException("Choose at least one file to embed.");
-        var entries = new List<PayloadEntry>(inputPaths.Count);
+        if (inputPaths.Count > PixelStegLimits.MaximumBundleEntries)
+            throw new ArgumentException($"A bundle can contain at most {PixelStegLimits.MaximumBundleEntries} entries.");
+        var files = new List<(FileInfo Info, string MediaType)>(inputPaths.Count);
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        long estimatedBundleSize = 8;
         foreach (var path in inputPaths)
         {
             if (!File.Exists(path)) throw new FileNotFoundException("Payload file was not found.", path);
             var info = new FileInfo(path);
             if (info.Length > PixelStegLimits.MaximumPayloadBytes)
                 throw new PixelStegException($"'{info.Name}' exceeds the payload size limit.");
+            if (!names.Add(info.Name))
+                throw new PixelStegException("Payload file names must be unique.");
+            var mediaType = MediaTypeFor(info.Extension);
+            var entrySize = 45L + System.Text.Encoding.UTF8.GetByteCount(info.Name) +
+                System.Text.Encoding.UTF8.GetByteCount(mediaType) + info.Length;
+            if (estimatedBundleSize > PixelStegLimits.MaximumBundleBytes - entrySize)
+                throw new PixelStegException("The combined payload files exceed the bundle size limit.");
+            estimatedBundleSize += entrySize;
+            files.Add((info, mediaType));
+        }
+
+        var entries = new List<PayloadEntry>(files.Count);
+        foreach (var file in files)
+        {
             entries.Add(new PayloadEntry(
                 PayloadKind.File,
-                info.Name,
-                MediaTypeFor(info.Extension),
-                await File.ReadAllBytesAsync(path, cancellationToken)));
+                file.Info.Name,
+                file.MediaType,
+                await File.ReadAllBytesAsync(file.Info.FullName, cancellationToken)));
         }
 
         return await WriteCarrierAsync(

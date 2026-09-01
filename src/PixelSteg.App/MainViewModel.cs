@@ -352,6 +352,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         else
         {
             var info = new FileInfo(PayloadPath);
+            if (info.Length > PixelStegLimits.MaximumPayloadBytes)
+                throw new PixelStegException($"'{info.Name}' exceeds the payload size limit.");
             entry = new PayloadEntry(
                 PayloadKind.File,
                 info.Name,
