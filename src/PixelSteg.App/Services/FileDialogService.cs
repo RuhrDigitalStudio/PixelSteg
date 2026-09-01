@@ -4,19 +4,45 @@ namespace PixelSteg.App.Services;
 
 public sealed class FileDialogService
 {
-    public string? ChooseInput(OperationMode mode)
+    public string? ChoosePng(string title)
     {
-        using var dialog = new OpenFileDialog { Filter = mode == OperationMode.Encode ? "All files|*.*" : "PNG files|*.png", Title = mode == OperationMode.Encode ? "Choose a file to encode" : "Choose a PixelSteg PNG" };
+        using var dialog = new OpenFileDialog
+        {
+            Filter = "PNG images|*.png",
+            Title = title
+        };
         return dialog.ShowDialog() == DialogResult.OK ? dialog.FileName : null;
     }
-    public string? ChooseEncodeDestination()
+
+    public string? ChoosePayloadFile()
     {
-        using var dialog = new SaveFileDialog { Filter = "PNG files|*.png", AddExtension = true, DefaultExt = "png", Title = "Save encoded PNG" };
+        using var dialog = new OpenFileDialog
+        {
+            Filter = "All files|*.*",
+            Title = "Choose a file to hide"
+        };
         return dialog.ShowDialog() == DialogResult.OK ? dialog.FileName : null;
     }
-    public string? ChooseDecodeDirectory()
+
+    public string? ChooseCarrierDestination()
     {
-        using var dialog = new FolderBrowserDialog { Description = "Choose a folder for the verified decoded file", UseDescriptionForTitle = true };
+        using var dialog = new SaveFileDialog
+        {
+            Filter = "PNG images|*.png",
+            AddExtension = true,
+            DefaultExt = "png",
+            Title = "Save the PixelSteg carrier"
+        };
+        return dialog.ShowDialog() == DialogResult.OK ? dialog.FileName : null;
+    }
+
+    public string? ChooseRecoveryDirectory()
+    {
+        using var dialog = new FolderBrowserDialog
+        {
+            Description = "Choose a folder for recovered messages and files",
+            UseDescriptionForTitle = true
+        };
         return dialog.ShowDialog() == DialogResult.OK ? dialog.SelectedPath : null;
     }
 }

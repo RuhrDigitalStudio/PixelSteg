@@ -1,13 +1,214 @@
-<Window x:Class="PixelSteg.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="PixelSteg" Width="760" Height="560" MinWidth="620" MinHeight="470" AllowDrop="True" Drop="OnDrop">
-  <Grid Margin="36"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <StackPanel><TextBlock Text="PixelSteg" FontSize="32" FontWeight="SemiBold"/><TextBlock Text="A transparent, inert file-to-PNG container" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,24"/>
-      <StackPanel Orientation="Horizontal"><Button Content="Encode" Click="EncodeModeClick"/><Button Content="Decode" Click="DecodeModeClick"/></StackPanel></StackPanel>
-    <Border Grid.Row="1" Background="{StaticResource PanelBrush}" CornerRadius="12" Padding="28" Margin="0,24"><StackPanel>
-      <TextBlock Text="{Binding InputHint}" FontSize="18" FontWeight="SemiBold"/><TextBlock Text="Drop a file here or use Browse." Foreground="{StaticResource MutedBrush}" Margin="0,4,0,12"/>
-      <DockPanel><Button Content="Browse" Click="BrowseInputClick" DockPanel.Dock="Right"/><TextBox Text="{Binding InputPath, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True" VerticalContentAlignment="Center"/></DockPanel>
-      <TextBlock Text="Destination" FontWeight="SemiBold" Margin="0,22,0,8"/><DockPanel><Button Content="Choose" Click="BrowseDestinationClick" DockPanel.Dock="Right"/><TextBox Text="{Binding DestinationPath, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True" VerticalContentAlignment="Center"/></DockPanel>
-      <ProgressBar Height="8" Margin="0,26,0,8" Maximum="100" Value="{Binding Progress}"/><TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"/><TextBlock Text="{Binding OriginalFileName, StringFormat=Original embedded name: {0}}" Foreground="{StaticResource MutedBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
-    </StackPanel></Border>
-    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="Cancel" Click="CancelClick" IsEnabled="{Binding IsBusy}" Background="#CF6B73" Foreground="White"/><Button Content="{Binding ActionLabel}" Click="RunClick" IsEnabled="{Binding CanStart}"/></StackPanel>
+<Window x:Class="PixelSteg.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PixelSteg 2"
+        Width="1120"
+        Height="760"
+        MinWidth="900"
+        MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource CanvasBrush}"
+        Foreground="{StaticResource TextBrush}"
+        AllowDrop="True"
+        Drop="OnDrop">
+  <Window.Resources>
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
+  </Window.Resources>
+
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="240" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <Border Grid.Column="0" Background="{StaticResource SidebarBrush}" Padding="28,34">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+          <Border Width="42" Height="42" HorizontalAlignment="Left" CornerRadius="11" Background="{StaticResource AccentBrush}">
+            <TextBlock Text="PS" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" FontWeight="Bold" Foreground="#071D18" />
+          </Border>
+          <TextBlock Text="PixelSteg" FontSize="25" FontWeight="SemiBold" Margin="0,14,0,2" />
+          <TextBlock Text="Cover-image studio" Foreground="{StaticResource MutedBrush}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Margin="0,42,0,0">
+          <Button Style="{StaticResource NavButton}" Content="Hide content" Click="HideModeClick" />
+          <Button Style="{StaticResource NavButton}" Content="Reveal carrier" Click="RevealModeClick" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="3">
+          <TextBlock Text="LOCAL ONLY" Foreground="{StaticResource AccentBrush}" FontSize="11" FontWeight="Bold" />
+          <TextBlock Text="No upload. No automatic opening. The format is documented and inspectable." Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0" LineHeight="20" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Grid Grid.Column="1" Margin="42,30,42,28">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <StackPanel>
+        <TextBlock Text="{Binding ActionLabel}" FontSize="30" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding InputHint}" Foreground="{StaticResource MutedBrush}" FontSize="14" Margin="0,5,0,0" />
+      </StackPanel>
+
+      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,24,0,18">
+        <Grid>
+          <StackPanel Visibility="{Binding IsHideMode, Converter={StaticResource BooleanToVisibility}}">
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="01 · COVER" />
+                <TextBlock Style="{StaticResource CardTitle}" Text="Choose the image people will see" />
+                <TextBlock Text="8-bit RGB or RGBA PNG. Transparent pixels are never used." Foreground="{StaticResource MutedBrush}" Margin="0,4,0,14" />
+                <DockPanel>
+                  <Button Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right" Content="Browse PNG" Click="BrowseCoverClick" />
+                  <TextBox Text="{Binding CoverPath}" IsReadOnly="True" VerticalContentAlignment="Center" />
+                </DockPanel>
+                <TextBlock Text="{Binding CoverSummary}" Foreground="{StaticResource AccentBrush}" Margin="0,11,0,0" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="02 · CONTENT" />
+                <TextBlock Style="{StaticResource CardTitle}" Text="Hide a message or a file" />
+                <StackPanel Orientation="Horizontal" Margin="0,12,0,14">
+                  <Button Style="{StaticResource PillButton}" Content="Message" Click="MessageModeClick" />
+                  <Button Style="{StaticResource PillButton}" Content="File" Click="FileModeClick" />
+                </StackPanel>
+                <TextBox Visibility="{Binding IsMessagePayload, Converter={StaticResource BooleanToVisibility}}"
+                         Text="{Binding MessageText, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MinHeight="92"
+                         VerticalScrollBarVisibility="Auto"
+                         ToolTip="Message stored as UTF-8" />
+                <DockPanel Visibility="{Binding IsFilePayload, Converter={StaticResource BooleanToVisibility}}">
+                  <Button Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right" Content="Browse file" Click="BrowsePayloadClick" />
+                  <TextBox Text="{Binding PayloadPath}" IsReadOnly="True" VerticalContentAlignment="Center" />
+                </DockPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="28" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="03 · PROFILE" />
+                  <TextBlock Style="{StaticResource CardTitle}" Text="Choose the trade-off" />
+                  <ComboBox ItemsSource="{Binding Profiles}"
+                            SelectedValuePath="Profile"
+                            SelectedValue="{Binding SelectedProfile}"
+                            Margin="0,12,0,0">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate>
+                        <StackPanel Margin="2,4">
+                          <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
+                          <TextBlock Text="{Binding Description}" Foreground="{StaticResource MutedBrush}" FontSize="12" />
+                          <TextBlock Text="{Binding CapacityLabel}" Foreground="{StaticResource AccentBrush}" FontSize="12" />
+                        </StackPanel>
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="04 · PROTECTION" />
+                  <TextBlock Style="{StaticResource CardTitle}" Text="Compress and authenticate" />
+                  <CheckBox Content="Compress before embedding" IsChecked="{Binding Compress}" Margin="0,15,0,12" />
+                  <PasswordBox x:Name="PasswordInput" PasswordChanged="PasswordChanged" ToolTip="Optional password" />
+                  <TextBlock Text="Optional AES-256-GCM password" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,6,0,0" />
+                </StackPanel>
+              </Grid>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="05 · OUTPUT" />
+                <TextBlock Style="{StaticResource CardTitle}" Text="Save a new carrier PNG" />
+                <DockPanel Margin="0,12,0,0">
+                  <Button Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right" Content="Choose path" Click="BrowseDestinationClick" />
+                  <TextBox Text="{Binding DestinationPath}" IsReadOnly="True" VerticalContentAlignment="Center" />
+                </DockPanel>
+                <TextBlock Text="{Binding QualitySummary}" Foreground="{StaticResource AccentBrush}" Margin="0,11,0,0" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <StackPanel Visibility="{Binding IsRevealMode, Converter={StaticResource BooleanToVisibility}}">
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="01 · CARRIER" />
+                <TextBlock Style="{StaticResource CardTitle}" Text="Select and inspect a PixelSteg image" />
+                <DockPanel Margin="0,12,0,0">
+                  <Button Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right" Content="Browse carrier" Click="BrowseCarrierClick" />
+                  <TextBox Text="{Binding CarrierPath}" IsReadOnly="True" VerticalContentAlignment="Center" />
+                </DockPanel>
+                <TextBlock Text="{Binding DetectedProfile}" Foreground="{StaticResource AccentBrush}" Margin="0,11,0,0" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="28" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="02 · PASSWORD" />
+                  <TextBlock Style="{StaticResource CardTitle}" Text="Authenticate if protected" />
+                  <PasswordBox x:Name="RevealPasswordInput" PasswordChanged="PasswordChanged" Margin="0,12,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                  <TextBlock Style="{StaticResource Eyebrow}" Text="03 · DESTINATION" />
+                  <TextBlock Style="{StaticResource CardTitle}" Text="Choose a recovery folder" />
+                  <DockPanel Margin="0,12,0,0">
+                    <Button Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right" Content="Choose folder" Click="BrowseDestinationClick" />
+                    <TextBox Text="{Binding DestinationPath}" IsReadOnly="True" VerticalContentAlignment="Center" />
+                  </DockPanel>
+                </StackPanel>
+              </Grid>
+            </Border>
+
+            <Border Style="{StaticResource Card}" Visibility="{Binding HasRecoveredMessage, Converter={StaticResource BooleanToVisibility}}">
+              <StackPanel>
+                <TextBlock Style="{StaticResource Eyebrow}" Text="RECOVERED MESSAGE" />
+                <TextBox Text="{Binding RecoveredMessage, Mode=OneWay}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="100" Margin="0,10,0,0" />
+              </StackPanel>
+            </Border>
+            <TextBlock Text="{Binding QualitySummary}" Foreground="{StaticResource AccentBrush}" Margin="4,4,0,0" />
+          </StackPanel>
+        </Grid>
+      </ScrollViewer>
+
+      <Grid Grid.Row="2">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel>
+          <ProgressBar Height="5" Maximum="100" Value="{Binding Progress, Mode=OneWay}" />
+          <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource MutedBrush}" Margin="0,8,18,0" TextWrapping="Wrap" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+          <Button Style="{StaticResource SecondaryButton}" Content="Cancel" Click="CancelClick" IsEnabled="{Binding IsBusy}" />
+          <Button Content="{Binding ActionLabel}" Click="RunClick" IsEnabled="{Binding CanStart}" />
+        </StackPanel>
+      </Grid>
+    </Grid>
   </Grid>
 </Window>
