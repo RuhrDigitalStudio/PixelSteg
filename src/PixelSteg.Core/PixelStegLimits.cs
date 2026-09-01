@@ -11,4 +11,6 @@ public static class PixelStegLimits
     public const int MaximumCoverPixels = 32 * 1024 * 1024;
     public const long MaximumCoverRawBytes = (long)MaximumCoverPixels * 4 + 64 * 1024;
     public const long MaximumCoverCompressedBytes = MaximumCoverRawBytes + 2 * 1024 * 1024;
+    public const int MaximumBundleBytes = checked((int)(MaximumPayloadBytes + 2 * 1024 * 1024));
+    public const int MaximumStegoEnvelopeBytes = MaximumBundleBytes + 2 * 1024 * 1024;
 }
