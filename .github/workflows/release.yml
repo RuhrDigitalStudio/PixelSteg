@@ -1,8 +1,12 @@
 name: Release
 
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing v* tag to release
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -12,9 +16,15 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 25
     steps:
+      - name: Validate release tag
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: if ($env:RELEASE_TAG -notmatch '^v[0-9][A-Za-z0-9._-]*$') { throw 'Expected an existing v* tag' }
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          ref: ${{ inputs.release_tag }}
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 8.0.x
@@ -27,8 +37,10 @@ jobs:
           dotnet format PixelSteg.sln --verify-no-changes --no-restore
       - name: Publish packages
         shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          $version = "${{ github.ref_name }}".TrimStart('v')
+          $version = ($env:RELEASE_TAG).TrimStart('v')
           New-Item -ItemType Directory -Force artifacts | Out-Null
           dotnet publish src/PixelSteg.App/PixelSteg.App.csproj -c Release -r win-x64 --self-contained true -p:Version=$version -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false -o staging/app-win-x64
           dotnet publish src/PixelSteg.Cli/PixelSteg.Cli.csproj -c Release -r win-x64 --self-contained false -p:Version=$version -p:DebugType=None -p:DebugSymbols=false -o staging/cli-win-x64
@@ -46,4 +58,5 @@ jobs:
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" artifacts/* --verify-tag --generate-notes --title "PixelSteg ${{ github.ref_name }}"
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: gh release create "$env:RELEASE_TAG" artifacts/* --verify-tag --generate-notes --title "PixelSteg $env:RELEASE_TAG"
